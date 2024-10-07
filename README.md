@@ -1,2 +1,2 @@
 # Neon-Dash
-This a side-scrolling game. 
+This is a side-scrolling game. 
