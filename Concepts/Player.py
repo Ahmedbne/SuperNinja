@@ -12,13 +12,12 @@ from traits.jump import JumpTrait
 
 pygame.init()
 
-# Load the sprite sheet
 sprite_sheet = pygame.image.load("Pictures/Warrior_Sheet-Effect.png")
 
-# Define sprite frame dimensions based on the sprite sheet
-FRAME_WIDTH, FRAME_HEIGHT = 32, 32  # Adjust these based on the actual sprite dimensions
 
-# Helper function to load frames for a specific animation row
+FRAME_WIDTH, FRAME_HEIGHT = 32, 32 
+
+
 def load_animation_frames(row, num_frames):
     frames = []
     for i in range(num_frames):
@@ -28,18 +27,19 @@ def load_animation_frames(row, num_frames):
 
 # Define character animations
 character_sprites = {
-    "idle": load_animation_frames(row=0, num_frames=4),     # Idle animation frames
-    "run": load_animation_frames(row=1, num_frames=6),      # Running animation frames
-    "jump": load_animation_frames(row=2, num_frames=4),     # Jumping animation frames
-    "attack": load_animation_frames(row=3, num_frames=6),   # Attacking animation frames
-    "death": load_animation_frames(row=4, num_frames=6)     # Death animation frames
+    "idle": load_animation_frames(row=0, num_frames=4),    
+    "run": load_animation_frames(row=1, num_frames=6),      
+    "jump": load_animation_frames(row=2, num_frames=4),     
+    "attack": load_animation_frames(row=3, num_frames=6),   
+    "death": load_animation_frames(row=4, num_frames=6)     
 }
 
-# Define small and big animations (could be further expanded for other states if needed)
+
+
 small_animation = Animation(character_sprites["run"], character_sprites["idle"], character_sprites["jump"])
 big_animation = Animation(character_sprites["run"], character_sprites["idle"], character_sprites["jump"])
 
-# Player class with animations
+
 class Player(EntityBase):
     def __init__(self, x, y, level, screen, dashboard, sound, gravity=0.8):
         super(Player, self).__init__(x, y, gravity)
