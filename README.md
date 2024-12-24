@@ -7,23 +7,34 @@ A _multiplayer_, _co-op_ game made with __Pygame__, networking was made possible
 🕹️ Pygame: For smooth and responsive gameplay.
 🌐 Socket Networking: To enable seamless multiplayer co-op.
 
-## CONTROLS
-### Game:
-- A, Left Arrow: Move to the left
-- D, Right Arrow: Move to the right
-- Space, Up Arrow: Jump
-- L.Shift, R.Shift: Dash/Attack
-- ESC: Back out
-### Map Editor:
-- W, A, S, D or Arrow Keys: Pan the camera around
-- Left Click: Place tiles at the mouse position
-- Right Click: Delete tiles at the mouse position
-- G: Toggle snap to grid
-- Scroll Wheel: Circle tile groups
-- Shift + Scroll Wheel: Circle tile variant within current group
-- Ctrl + S: Save current map
-- Ctrl + R: Auto-format placed ruled tiles
-- ESC: Exit edit mode
+
+## **🎮 Game Controls**
+
+### **Gameplay**
+
+| Action          | Key(s)                        |
+| --------------- | ----------------------------- |
+| **Move Left**   | `A` or `Left Arrow`           |
+| **Move Right**  | `D` or `Right Arrow`          |
+| **Jump**        | `Space` or `Up Arrow`         |
+| **Dash/Attack** | `Left Shift` or `Right Shift` |
+| **Pause/Exit**  | `ESC`                         |
+
+### **Map Editor**
+
+| Action                  | Key(s)                           |
+| ----------------------- | -------------------------------- |
+| **Pan Camera**          | `W`, `A`, `S`, `D` or Arrow Keys |
+| **Place Tiles**         | `Left Click`                     |
+| **Delete Tiles**        | `Right Click`                    |
+| **Toggle Snap-to-Grid** | `G`                              |
+| **Cycle Tile Groups**   | `Scroll Wheel`                   |
+| **Cycle Tile Variants** | `Shift + Scroll Wheel`           |
+| **Save Map**            | `Ctrl + S`                       |
+| **Auto-Format Tiles**   | `Ctrl + R`                       |
+| **Exit Edit Mode**      | `ESC`                            |
+
+---
 
 ## REQUIRED EXTERNAL MODULES
 Install modules by the command `python -m pip install [module_name]` or `python3 -m pip install [module_name]`.
