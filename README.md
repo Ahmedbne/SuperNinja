@@ -71,7 +71,6 @@ After that, open the game and press the `Join` or `Host` button, depends on your
 
 ## NOTES
 - Ensure that all required libraries, modules are installed if you want to compile and run the game directly from source.
-- For executables, only the fonts are required.
 
 ## CONTRIBUTIONS
 @Ahmedbne - Product Owner  
