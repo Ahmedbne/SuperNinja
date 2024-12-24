@@ -73,10 +73,10 @@ After that, open the game and press the `Join` or `Host` button, depends on your
 - Ensure that all required libraries, modules are installed if you want to compile and run the game directly from source.
 
 ## CONTRIBUTIONS
-@Ahmedbne - Product Owner  
-@adamchafay23
-@AnouarBouy
-@YassirCHAOUB
-@Faza20-lab 
-@NadaBOUGHABA2003
-@danandoha
+@Ahmedbne - Product Owner 🥷🏻
+@adamchafay23 🥷🏻
+@AnouarBouy 🥷🏻
+@YassirCHAOUB 🥷🏻
+@Faza20-lab 🥷🏻
+@NadaBOUGHABA2003 🥷🏻
+@danandoha 🥷🏻
