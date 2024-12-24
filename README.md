@@ -1,4 +1,4 @@
-# SUPER NINJA - MULTIPLAYER SIDE-SCROLLING VIDEO GAME
+# # **🎮 SUPER NINJA** - A MULTIPLAYER SIDE-SCROLLING VIDEO GAME
 
 ## DESCRIPTION
 Welcome to Super Ninja, the ultimate side-scrolling multiplayer adventure! You’re a daring ninja armed with nothing but your wits and unmatched skills. Your mission? Survive waves of gun-toting enemies in a chaotic world where every second counts. Rally your ninja crew for cooperative gameplay and prove that together, no challenge is insurmountable!
