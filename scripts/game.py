@@ -251,3 +251,324 @@ class MultiplayerGameBase(GameBase):
 		super().run()
 		self.client.game_started = True
 
+class GameForHost(MultiplayerGameBase):
+	def initialize(self, server, host_ip, port, nickname):
+		super().initialize()
+		self.server = server
+		self.client = GameClient(self, "host", ip=host_ip, port=port, nickname=nickname)
+
+
+	def start_server(self, status_text, set_buttons_interactable):
+		status_text.set_text("[STARTING]: Initializing LAN server...")
+		set_buttons_interactable(False)
+		threading.Thread(target=self.server.start_server).start()
+		time.sleep(4)
+		
+		if self.server.running:
+			status_text.set_text("[CREATING]: Server started, creating lobby...")
+			threading.Thread(target=self.client.connect).start()
+			time.sleep(4)
+			
+			if self.connected:
+				status_text.set_text("[JOINING]: Lobby created, joining...")
+				time.sleep(2)
+				status_text.set_text(f"[JOINED]: You've hosted and joined the lobby as \"{self.client.nickname}\"")
+				self.client.send_manually(f"*[PLAYER READY]")
+			else:
+				status_text.set_text("[ERROR]: Failed to make connection, check IP and port.")
+		else:
+			status_text.set_text("[TIMED OUT]: Server failed to start, check IP and port.")
+
+		set_buttons_interactable(True)
+
+
+	def launch_session(self, status_text, set_buttons_interactable):
+		status_text.set_text("[LAUNCHING]: Starting game session...")
+		set_buttons_interactable(False)
+		time.sleep(3)
+		self.client.send_manually("*[START GAME]")
+		set_buttons_interactable(True)
+
+
+	def run(self):
+		super().run()
+
+		while self.running and self.connected:
+			self.outline_display.fill((0, 0, 0, 0))
+			self.normal_display.blit(self.assets["background"], (0, 0))
+
+			self.screenshake = max(self.screenshake - 1, 0)
+
+			# Handle level transitions.
+			if not len(self.entities[4:]) and self.level_id < self.max_level:
+				self.transition += 1
+				if self.transition > 30:
+					print("Entering the next level...")
+					self.level_id = min(self.level_id + 1, self.max_level)
+					self.load_level(self.level_id)
+			if self.transition < 0:
+				self.transition += 1
+
+			# Update the respawn timer.
+			if self.dead:
+				self.dead += 1
+				if self.dead >= 10:
+					self.transition = min(self.transition + 1, 30)
+				if self.dead > 60:
+					self.respawn()
+
+			# Update the camera scroll.
+			self.camera_scroll[0] += (self.get_main_player().rect().centerx - self.outline_display.get_width() / 2 - self.camera_scroll[0]) / 30
+			self.camera_scroll[1] += (self.get_main_player().rect().centery - self.outline_display.get_height() / 2 - self.camera_scroll[1]) / 30
+			render_scroll = (int(self.camera_scroll[0]), int(self.camera_scroll[1]))
+
+			self.render_terrain(render_scroll)
+
+			# Update and render the enemies on the main loop, only for the host.
+			for enemy in self.entities[4:]:
+				enemy.update(self.tilemap, movement=(0, 0))
+				enemy.render(self.outline_display, offset=render_scroll)
+
+			# Update and render the main player and other initialized players.
+			if not self.dead:
+				self.get_main_player().update(self.tilemap, movement=(self.movement[1] - self.movement[0], 0))
+				self.get_main_player().render(self.outline_display, offset=render_scroll)
+			
+			for player in self.entities[:4]:
+				if player.initialized and player.id != "main_player" and not player.died:
+					player.render(self.outline_display, offset=render_scroll)
+
+			# Render the gun projectiles.
+			for projectile in self.projectiles.copy():
+				# [[x, y], direction, alive_time]
+				projectile.update()
+				projectile.render(self.outline_display, offset=render_scroll)
+				if self.tilemap.solid_check(projectile.pos):
+					self.projectiles.remove(projectile)
+					for i in range(4):
+						self.sparks.append(Spark(projectile.pos, random.random() - 0.5 + (math.pi if projectile.direction > 0 else 0), random.random() + 2))
+				elif projectile.alive_time > 360:
+					self.projectiles.remove(projectile)
+				
+				# Check if any player gets shot.
+				else:
+					for player in self.entities[:4]:
+						if abs(player.dashing) < 50 and player.rect().collidepoint(projectile.pos):
+							self.projectiles.remove(projectile)
+							self.sounds["hit"].play()
+							if player.id == "main_player":
+								self.get_main_player().died = True
+								self.dead += 1
+								self.screenshake = max(self.screenshake, 16)
+							
+							# Generate sparks and dust.
+							for i in range(30):
+								angle = random.random() * math.pi * 2
+								self.sparks.append(Spark(player.rect().center, angle, random.random() + 2))
+
+								speed = random.random() * 5
+								velocity = [math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5]
+								self.particles.append(Particle(self, "dust", player.rect().center,
+																velocity=velocity, start_frame=random.randint(0, 7)))
+							break
+
+			self.render_effects(render_scroll)
+
+			# Events handling.
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					self.server.shutdown()
+					pygame.quit()
+					sys.exit()
+				
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_ESCAPE:
+						self.server.shutdown()
+						self.running = False
+						fade_out((self.normal_display.get_width(), self.normal_display.get_height()), self.normal_display)
+						return
+					if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+						self.movement[0] = True
+					if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+						self.movement[1] = True
+					if event.key == pygame.K_UP or event.key == pygame.K_SPACE:
+						if self.get_main_player().jump():
+							self.sounds["jump"].play()
+					if event.key == pygame.K_LSHIFT or event.key == pygame.K_RSHIFT:
+						self.get_main_player().dash()
+				
+				if event.type == pygame.KEYUP:
+					if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+						self.movement[0] = False
+					if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+						self.movement[1] = False
+
+			self.handle_level_transition()
+
+			# Blit the outline display on top of the normal one.
+			self.normal_display.blit(self.outline_display, (0, 0))
+
+			# Render the players' name tags over anything else.
+			for player in self.entities[:4]:
+				if player.initialized and not player.died:
+					player.render_name_tag(self.normal_display, offset=render_scroll)
+
+			# Finally, scale and blit all of them on the main screen, along with the screenshake effect.
+			screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
+			self.screen.blit(pygame.transform.scale(self.normal_display, self.screen.get_size()), screenshake_offset)
+			
+			pygame.display.update()
+			self.clock.tick(60)
+
+
+class GameForClient(MultiplayerGameBase):
+	def initialize(self, host_ip, port, nickname):
+		super().initialize()
+		self.client = GameClient(self, "client_unverified", ip=host_ip, port=port, nickname=nickname)
+
+
+	def join_lobby(self, status_text, set_buttons_interactable):
+		status_text.set_text("[CONNECTING]: Attempting to connect to server...")
+		set_buttons_interactable(False)
+		threading.Thread(target=self.client.connect).start()
+		time.sleep(5)
+		
+		if self.connected:
+			status_text.set_text("[JOINING]: Connected, joining lobby...")
+			time.sleep(3)
+			status_text.set_text(f"[JOINED]: You've joined the lobby as \"{self.client.nickname}\"")
+			self.client.send_manually(f"*[PLAYER READY]")
+		else:
+			status_text.set_text("[TIMED OUT]: Host not found, check IP and port.")
+		
+		set_buttons_interactable(True)
+
+
+	def run(self):
+		super().run()
+
+		while self.running and self.connected:
+			self.outline_display.fill((0, 0, 0, 0))
+			self.normal_display.blit(self.assets["background"], (0, 0))
+
+			self.screenshake = max(self.screenshake - 1, 0)
+
+			# Handle level transitions.
+			if not len(self.entities[4:]) and self.level_id < self.max_level:
+				self.transition += 1
+				if self.transition > 30:
+					print("Entering the next level...")
+					self.level_id = min(self.level_id + 1, self.max_level)
+					self.load_level(self.level_id)
+			if self.transition < 0:
+				self.transition += 1
+
+			# Update the respawn timer.
+			if self.dead:
+				self.dead += 1
+				if self.dead >= 10:
+					self.transition = min(self.transition + 1, 30)
+				if self.dead > 60:
+					self.respawn()
+
+			# Update the camera scroll.
+			self.camera_scroll[0] += (self.get_main_player().rect().centerx - self.outline_display.get_width() / 2 - self.camera_scroll[0]) / 30
+			self.camera_scroll[1] += (self.get_main_player().rect().centery - self.outline_display.get_height() / 2 - self.camera_scroll[1]) / 30
+			render_scroll = (int(self.camera_scroll[0]), int(self.camera_scroll[1]))
+
+			self.render_terrain(render_scroll)
+
+			# Render the enemies.
+			for enemy in self.entities[4:]:
+				enemy.render(self.outline_display, offset=render_scroll)
+
+			# Update and render the main player and other initialized players.
+			if not self.dead:
+				self.get_main_player().update(self.tilemap, movement=(self.movement[1] - self.movement[0], 0))
+				self.get_main_player().render(self.outline_display, offset=render_scroll)
+			
+			for player in self.entities[:4]:
+				if player.initialized and player.id != "main_player" and not player.died:
+					player.render(self.outline_display, offset=render_scroll)
+
+			# Render the gun projectiles.
+			for projectile in self.projectiles.copy():
+				# [[x, y], direction, alive_time]
+				projectile.update()
+				projectile.render(self.outline_display, offset=render_scroll)
+				if self.tilemap.solid_check(projectile.pos):
+					self.projectiles.remove(projectile)
+					for i in range(4):
+						self.sparks.append(Spark(projectile.pos, random.random() - 0.5 + (math.pi if projectile.direction > 0 else 0), random.random() + 2))
+				elif projectile.alive_time > 360:
+					self.projectiles.remove(projectile)
+				
+				# Check if any player gets shot.
+				else:
+					for player in self.entities[:4]:
+						if abs(player.dashing) < 50 and player.rect().collidepoint(projectile.pos):
+							self.projectiles.remove(projectile)
+							self.sounds["hit"].play()
+							if player.id == "main_player":
+								self.get_main_player().died = True
+								self.dead += 1
+								self.screenshake = max(self.screenshake, 16)
+							
+							# Generate sparks and dust.
+							for i in range(30):
+								angle = random.random() * math.pi * 2
+								self.sparks.append(Spark(player.rect().center, angle, random.random() + 2))
+
+								speed = random.random() * 5
+								velocity = [math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5]
+								self.particles.append(Particle(self, "dust", player.rect().center,
+																velocity=velocity, start_frame=random.randint(0, 7)))
+							break
+
+			self.render_effects(render_scroll)
+
+			# Events handling.
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					self.disconnect_from_server()
+					pygame.quit()
+					sys.exit()
+				
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_ESCAPE:
+						self.disconnect_from_server()
+						self.running = False
+						fade_out((self.normal_display.get_width(), self.normal_display.get_height()), self.normal_display)
+						return
+					if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+						self.movement[0] = True
+					if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+						self.movement[1] = True
+					if event.key == pygame.K_UP or event.key == pygame.K_SPACE:
+						if self.get_main_player().jump():
+							self.sounds["jump"].play()
+					if event.key == pygame.K_LSHIFT or event.key == pygame.K_RSHIFT:
+						self.get_main_player().dash()
+				
+				if event.type == pygame.KEYUP:
+					if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+						self.movement[0] = False
+					if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+						self.movement[1] = False
+
+			self.handle_level_transition()
+
+			# Blit the outline display on top of the normal one.
+			self.normal_display.blit(self.outline_display, (0, 0))
+
+			# Render the players' name tags over anything else.
+			for player in self.entities[:4]:
+				if player.initialized and not player.died:
+					player.render_name_tag(self.normal_display, offset=render_scroll)
+
+			# Finally, scale and blit all of them on the main screen, along with the screenshake effect.
+			screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
+			self.screen.blit(pygame.transform.scale(self.normal_display, self.screen.get_size()), screenshake_offset)
+			
+			pygame.display.update()
+			self.clock.tick(60)
