@@ -4,8 +4,8 @@
 Welcome to Super Ninja, the ultimate side-scrolling multiplayer adventure! You’re a daring ninja armed with nothing but your wits and unmatched skills. Your mission? Survive waves of gun-toting enemies in a chaotic world where every second counts. Rally your ninja crew for cooperative gameplay and prove that together, no challenge is insurmountable!
 
 A _multiplayer_, _co-op_ game made with __Pygame__, networking was made possible with __Socket__.
-🕹️ Pygame: For smooth and responsive gameplay.
-🌐 Socket Networking: To enable seamless multiplayer co-op.
+-🕹️ Pygame: For smooth and responsive gameplay.
+-🌐 Socket Networking: To enable seamless multiplayer co-op.
 
 
 ## **🎮 Game Controls**
