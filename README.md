@@ -49,7 +49,7 @@ Install modules by the command `python -m pip install [module_name]` or `python3
 ## INSTALLATION
 - Clone the repo with `git clone https://github.com/Ahmedbne/SuperNinja.git`.
 - Install all required modules from the above section.
-- Navigate to `Super_Ninja\assets\fonts` and install all required fonts.
+- Navigate to `SuperNinja\assets\fonts` and install all required fonts.
 - Run these following commands:
 ```
 cd Super_Ninja
