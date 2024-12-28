@@ -52,9 +52,9 @@ Install modules by the command `python -m pip install [module_name]` or `python3
 - Navigate to `SuperNinja\assets\fonts` and install all required fonts.
 - Run these following commands:
 ```
-cd Super_Ninja
-For Windows: python silly_ninja.py
-For Linux: python3 silly_ninja.py
+cd SuperNinja
+For Windows: python SuperNinja.py
+For Linux: python3 SuperNinja.py
 ```
  
 ## MULTIPLAYER INSTRUCTION
