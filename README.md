@@ -69,7 +69,7 @@ After that, open the game and press the `Join` or `Host` button, depends on your
 
 ## KNOWN ISSUES
 - Levels are currently be order by ID as an integer. So when you create a new level using the Map Editor, its ID must be an integer that goes after the last level in the `assets/maps` folder, otherwise the game will crashes on level transitions.
-- Levels are __NOT__ synced between machines on multiplayer mode, so if you make a new level or delete an existing one using the Map Editor. Then those new changes won't be shared across multiple devices in multiplayer mode, resulting in weird behaviors or even crashes during runtime. This issue has been acknowledged by us and will be fixed on future update. The current workaround is to have the host send his level files to all the clients before hosting a session.
+- Levels are __NOT__ synced between machines on multiplayer mode, so if you make a new level or delete an existing one using the Map Editor. Then those new changes won't be shared across multiple devices in multiplayer mode, resulting in weird behaviors or even crashes during runtime.
 
 ## NOTES
 - Ensure that all required libraries, modules are installed if you want to compile and run the game directly from source.
