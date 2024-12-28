@@ -76,9 +76,15 @@ After that, open the game and press the `Join` or `Host` button, depends on your
 
 ## CONTRIBUTIONS
 -@Ahmedbne - Product Owner 🥷🏻
+
 -@adamchafay23 🥷🏻
+
 -@AnouarBouy 🥷🏻
+
 -@YassirCHAOUB 🥷🏻
+
 -@Faza20-lab 🥷🏻
+
 -@NadaBOUGHABA2003 🥷🏻
+
 -@danandoha 🥷🏻
