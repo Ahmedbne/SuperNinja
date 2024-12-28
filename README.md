@@ -53,7 +53,7 @@ Install modules by the command `python -m pip install [module_name]` or `python3
 - Run these following commands:
 ```
 cd SuperNinja
-For Windows: python SuperNinja.py
+For Windows/macOS: python SuperNinja.py
 For Linux: python3 SuperNinja.py
 ```
  
