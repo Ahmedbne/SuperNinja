@@ -6,6 +6,7 @@ Welcome to Super Ninja, the ultimate side-scrolling multiplayer adventure! You�
 A _multiplayer_, _co-op_ game made with __Pygame__, networking was made possible with __Socket__.
 
 -🕹️ Pygame: For smooth and responsive gameplay.
+
 -🌐 Socket Networking: To enable seamless multiplayer co-op.
 
 
