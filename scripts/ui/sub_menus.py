@@ -88,6 +88,139 @@ class SubMenuBase(MenuBase):
 		if event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_ESCAPE:
 				self.back_button.click(MenuBase.screen, self.fade_alpha)
+class HostMenu(SubMenuBase):
+	def __init__(self):
+		super().__init__()
+		self.default_ip = socket.gethostbyname(socket.gethostname())
+		self.default_port = 5050
+
+		self.game = GameForHost(MenuBase.clock, MenuBase.screen, MenuBase.outline_display, MenuBase.normal_display)
+		self.server = None
+		self.lobby = None
+
+		# UI elements.
+		self.title = Text("HOST GAME", "retro gaming", (CENTER, 10), size=70, bold=True)
+		self.sub_title = Text("----- Local Area Network (LAN) Only -----", "retro gaming", (CENTER, 90), size=16)
+
+		self.default_ip_text = Text(f"Your default local IP: {self.default_ip}", "retro gaming", (CENTER, 140), size=12)
+		self.server_ip_field = InputField("gamer", (CENTER, 160), (400, 50), placeholder_text="Enter Local Host IP...")
+		
+		self.default_port_text = Text(f"Default Port: {self.default_port}", "retro gaming", (CENTER, 220), size=12)
+		self.port_field = InputField("gamer", (CENTER, 240), (400, 50), placeholder_text="Enter Port Number...")
+
+		self.nickname_field = InputField("gamer", (CENTER, 300), (400, 50), placeholder_text="Choose a Nickname...")
+
+		self.status_text = Text("", "retro gaming", (CENTER, 360), size=13, color=pygame.Color("crimson"))
+
+		self.start_button = Button("Start", "gamer", (420, 390), (150, 60), on_click=self.start_hosting, fade_out=False)
+
+
+	def run(self):
+		self.running = True
+		self.server_ip_field.set_text(self.default_ip)
+		self.port_field.set_text(self.default_port)
+		show_running_threads()
+		
+		while self.running:
+			MenuBase.screen.blit(self.background, (0, 0))
+
+			if "[JOINED]" in self.status_text.text:
+				self.enter_lobby()
+			if self.game.running:
+				self.game.run()
+
+			mx, my = pygame.mouse.get_pos()
+
+			# Render titles.
+			self.title.render(MenuBase.screen)
+			self.sub_title.render(MenuBase.screen)
+
+			# Render the server ip input field.
+			self.default_ip_text.render(MenuBase.screen)
+			self.server_ip_field.update(mx, my, self.click)
+			self.server_ip_field.render(MenuBase.screen)
+
+			# Render the port number input field.
+			self.default_port_text.render(MenuBase.screen)
+			self.port_field.update(mx, my, self.click)
+			self.port_field.render(MenuBase.screen)
+
+			# Render the nickname input field.
+			self.nickname_field.update(mx, my, self.click)
+			self.nickname_field.render(MenuBase.screen)
+
+			# Render the error text.
+			self.status_text.render(MenuBase.screen)
+
+			# Render the start button.
+			self.fade_alpha = self.start_button.update(MenuBase.screen, self.fade_alpha, mx, my, self.click)
+			self.start_button.render(MenuBase.screen)
+
+			# Render the back button.
+			self.fade_alpha = self.back_button.update(MenuBase.screen, self.fade_alpha, mx, my, self.click)
+			self.back_button.render(MenuBase.screen)
+
+			# Handle the fade int effect.
+			self.handle_fade_in(MenuBase.screen)
+
+			# Handle events.
+			self.click = False
+			for event in pygame.event.get():
+				self.handle_events(event)
+
+			pygame.display.update()
+			MenuBase.clock.tick(60)
+
+
+	def start_hosting(self):
+		ip = self.server_ip_field.get_submitted_text()
+		port = self.port_field.get_submitted_text()
+		nickname = self.nickname_field.get_submitted_text()
+
+		if len(nickname) not in range(3, 16):
+			self.status_text.set_text("[ERROR]: Nickname must be from 3 to 15 characters.")
+
+		elif re.match(IP_REGEX, ip) and re.match(PORT_REGEX, port):
+			self.status_text.set_text("")
+			try:
+				print(ip, int(port), nickname)
+				self.server = GameServer(ip, port)
+				self.game.initialize(self.server, ip, int(port), nickname)
+
+				threading.Thread(target=self.game.start_server, args=(self.status_text, self.set_buttons_interactable)).start()
+
+			except Exception:
+				self.status_text.set_text("[FAILED]: Server not found or IP was incorrect! Try again.")
+		else:
+			self.status_text.set_text("[FORMAT ERROR] IPv4 or Port was invalid (less than 1000)!")
+
+
+	def enter_lobby(self):
+		self.status_text.set_text("")
+		del self.lobby
+		self.lobby = Lobby(self.game, server=self.server, is_host=True)
+		self.lobby.run()
+
+
+	def set_buttons_interactable(self, state):
+		if self.back_button.interactable != state:
+			self.back_button.interactable = bool(state)
+			self.start_button.interactable = bool(state)
+
+
+	def handle_events(self, event):
+		super().handle_events(event)
+		self.server_ip_field.handle_key_pressed(event)
+		self.port_field.handle_key_pressed(event)
+		self.nickname_field.handle_key_pressed(event)
+
+
+	def back_out(self):
+		super().back_out()
+		self.server_ip_field.clear_text()
+		self.port_field.clear_text()
+		self.status_text.set_text("")
+
 
 class JoinMenu(SubMenuBase):
 	def __init__(self):
