@@ -572,3 +572,138 @@ class GameForClient(MultiplayerGameBase):
 			
 			pygame.display.update()
 			self.clock.tick(60)
+class GameSolo(GameBase):
+	def __init__(self, clock, screen, outline_display, normal_display):
+		super().__init__(clock, screen, outline_display, normal_display)
+		self.player = Player("", self, (50, 50), (8, 15))
+		self.start_game()
+
+
+	def get_main_player(self):
+		return self.player
+
+
+	def load_level(self, id):
+		super().load_level(id)
+		self.enemies = []
+		for spawner in self.tilemap.extract([("spawners", 0), ("spawners", 1)]):
+			if spawner.variant == 0:
+				self.player.respawn(spawner.pos)
+			else:
+				self.enemies.append(Enemy(self, spawner.pos, (8, 15)))
+
+	def run(self):
+		super().run()
+
+		self.start_game()
+		while self.running:
+			self.outline_display.fill((0, 0, 0, 0))
+			self.normal_display.blit(self.assets["background"], (0, 0))
+
+			self.screenshake = max(self.screenshake - 1, 0)
+
+			# Handle level transitions.
+			if not len(self.enemies) and self.level_id < self.max_level:
+				self.transition += 1
+				if self.transition > 30:
+					print("Entering the next level...")
+					self.level_id = min(self.level_id + 1, self.max_level)
+					self.load_level(self.level_id)
+			if self.transition < 0:
+				self.transition += 1
+
+			# Update the respawn timer.
+			if self.dead:
+				self.dead += 1
+				if self.dead >= 10:
+					self.transition = min(self.transition + 1, 30)
+				if self.dead > 60:
+					self.load_level(self.level_id)
+
+			# Update the camera scroll.
+			self.camera_scroll[0] += (self.player.rect().centerx - self.outline_display.get_width() / 2 - self.camera_scroll[0]) / 30
+			self.camera_scroll[1] += (self.player.rect().centery - self.outline_display.get_height() / 2 - self.camera_scroll[1]) / 30
+			render_scroll = (int(self.camera_scroll[0]), int(self.camera_scroll[1]))
+
+			self.render_terrain(render_scroll)
+
+			# Render the enemies.
+			for enemy in self.enemies.copy():
+				died = enemy.update(self.tilemap, movement=(0, 0))
+				enemy.render(self.outline_display, offset=render_scroll)
+				if died:
+					self.enemies.remove(enemy)
+
+			# Render the player.
+			if not self.dead:
+				self.player.update(self.tilemap, movement=(self.movement[1] - self.movement[0], 0))
+				self.player.render(self.outline_display, offset=render_scroll)
+
+			# Render the gun projectiles.
+			for projectile in self.projectiles.copy():
+				# [[x, y], direction, alive_time]
+				projectile.update()
+				projectile.render(self.outline_display, offset=render_scroll)
+				if self.tilemap.solid_check(projectile.pos):
+					self.projectiles.remove(projectile)
+					for i in range(4):
+						self.sparks.append(Spark(projectile.pos, random.random() - 0.5 + (math.pi if projectile.direction > 0 else 0), random.random() + 2))
+				elif projectile.alive_time > 360:
+					self.projectiles.remove(projectile)
+				
+				# If the player gets shot.
+				elif abs(self.player.dashing) < 50 and self.player.rect().collidepoint(projectile.pos):
+					self.projectiles.remove(projectile)
+					self.sounds["hit"].play()
+					self.player.died = True
+					self.dead += 1
+					self.screenshake = max(self.screenshake, 16)
+					for i in range(30):
+						angle = random.random() * math.pi * 2
+						self.sparks.append(Spark(self.player.rect().center, angle, random.random() + 2))
+
+						speed = random.random() * 5
+						velocity = [math.cos(angle + math.pi) * speed * 0.5, math.sin(angle + math.pi) * speed * 0.5]
+						self.particles.append(Particle(self, "dust", self.player.rect().center, velocity=velocity, start_frame=random.randint(0, 7)))
+
+			self.render_effects(render_scroll)
+
+			# Events handling.
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					sys.exit()
+				if event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_ESCAPE:
+						self.running = False
+						fade_out((self.normal_display.get_width(), self.normal_display.get_height()), self.normal_display)
+					if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+						self.movement[0] = True
+					if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+						self.movement[1] = True
+					if event.key == pygame.K_UP or event.key == pygame.K_SPACE:
+						if self.player.jump():
+							self.sounds["jump"].play()
+					if event.key == pygame.K_LSHIFT or event.key == pygame.K_RSHIFT:
+						self.player.dash()
+				if event.type == pygame.KEYUP:
+					if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+						self.movement[0] = False
+					if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+						self.movement[1] = False
+
+			self.handle_level_transition()
+
+			# Blit the outline display on top of the normal one.
+			self.normal_display.blit(self.outline_display, (0, 0))
+
+			# Render world UI over anything else.
+			if not self.dead:
+				self.player.name_text.render(self.normal_display, offset=render_scroll)
+
+			# Finally, scale and blit all of them on the main screen, along with the screenshake effect.
+			screenshake_offset = (random.random() * self.screenshake - self.screenshake / 2, random.random() * self.screenshake - self.screenshake / 2)
+			self.screen.blit(pygame.transform.scale(self.normal_display, self.screen.get_size()), screenshake_offset)
+			
+			pygame.display.update()
+			self.clock.tick(60)
