@@ -1,3 +1,5 @@
+import pygame
+import json
 
 class PhysicsEntity:
 	def __init__(self, game, entity_type, pos, size, id="", client_id="solo"):
