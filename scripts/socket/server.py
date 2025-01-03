@@ -26,9 +26,6 @@ class SocketServer:
 		"""
 		Shuts down the game server by disconnecting all clients and closing the server socket.
 		"""
-		"""
-		Shuts down the server by disconnecting all clients and closing the server socket.
-		"""
 		self.nicknames = []
 		self.running = True
 		self.is_shutdown = False
@@ -49,11 +46,6 @@ class SocketServer:
 	def client_count(self):
 		"""
 		Return the number of connected clients in the game server.
-
-		:return: The number of connected clients.
-		"""
-		"""
-		Return the number of connected clients.
 
 		:return: The number of connected clients.
 		"""
