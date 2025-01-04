@@ -67,6 +67,42 @@ After that, open the game and press the `Join` or `Host` button, depends on your
 - For the client, enter the Host's IP and port to both fields. After that, pick a nickname and press `Join`, you'll be in the lobby if the connection establishes successfully.
 - After all clients have joined the lobby and ready, indicates by their slots borders turn green, the Host then can start the game by pressing the `Launch` button.
 
+## Docker Setup
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/products/docker-desktop/) installed on your machine.
+
+### Building the Docker Image
+
+Navigate to the project root directory and build the Docker image:
+
+```bash
+docker build -t superninja:latest .
+```
+
+If you encounter build issues related to package mismatches, try building without cache:
+
+```bash
+docker build --no-cache -t superninja:latest .
+```
+
+### Running the Docker Container
+
+Run the container in detached mode:
+
+```bash
+docker run -d --name superninja_container superninja:latest
+```
+
+### Viewing Logs
+
+To see the game's output and ensure it's running correctly:
+
+```bash
+docker logs -f superninja_container
+```
+
 ## KNOWN ISSUES
 - Levels are currently be order by ID as an integer. So when you create a new level using the Map Editor, its ID must be an integer that goes after the last level in the `assets/maps` folder, otherwise the game will crashes on level transitions.
 - Levels are __NOT__ synced between machines on multiplayer mode, so if you make a new level or delete an existing one using the Map Editor. Then those new changes won't be shared across multiple devices in multiplayer mode, resulting in weird behaviors or even crashes during runtime.
