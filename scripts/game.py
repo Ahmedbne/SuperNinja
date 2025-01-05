@@ -4,7 +4,7 @@ import sys
 import os
 import math
 import time
-import threading
+import threading 
 
 from scripts.tilemap import Tilemap
 from scripts.entities import Player, Enemy
